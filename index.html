@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Message Encrypter/Decrypter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 500px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button.encrypt {
+            background-color: #007bff;
+        }
+        .button.decrypt {
+            background-color: #28a745;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .result label {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Secure Message Encrypter/Decrypter</h1>
+        <label for="message">Message:</label>
+        <textarea id="message" placeholder="Type your message here..."></textarea>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Type your password here...">
+
+        <div class="button-container">
+            <button class="button encrypt">Encyrpt Message</button>
+            <button class="button decrypt">Decrypt Message</button>
+        </div>
+
+        <div class="result">
+            <label for="output">Encyrpted/Decrypted Message:</label>
+            <textarea id="output" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        const message = document.getElementById('message');
+        const password = document.getElementById('password');
+        const output = document.getElementById('output');
+        const encryptButton = document.querySelector('.encrypt');
+        const decryptButton = document.querySelector('.decrypt');
+
+        encryptButton.addEventListener('click', () => {
+            output.value = encrypt(message.value, password.value);
+        });
+
+        decryptButton.addEventListener('click', () => {
+            output.value = decrypt(message.value, password.value);
+        });
+        
+        function encrypt(message, password) {
+            const mapping = createMapping(message, password);
+            return encryptMessage(message, mapping);
+        }
+
+        function decrypt(message, password) {
+            const reverseMapping = createReverseMapping(message, password);
+            return decryptMessage(message, reverseMapping);
+        }
+        function generateFrequencyList(message) {
+            const frequency = {};
+            for (const char of message) {
+                //skip over whitespace
+                if (char === ' ' || char === '\n' || char === '\r') {
+                    continue;
+                }
+                if (char in frequency) {
+                    frequency[char]++;
+                } else {
+                    frequency[char] = 1;
+                }
+            }
+
+        // Sort characters by frequency and then lexicographically
+        return Object.keys(frequency).sort((a, b) => {
+            if (frequency[a] !== frequency[b]) {
+                return frequency[b] - frequency[a];
+            }
+            return a.localeCompare(b);
+        });
+        }
+
+        function chooseReplacementCharacter(shortenedMessage, passwordChar) {
+            // Get the code point of the password character
+            const passwordCharCode = passwordChar.codePointAt(0);
+
+            // Calculate the index using modulo to ensure it falls within the bounds of the shortenedMessage
+            const index = passwordCharCode % shortenedMessage.length;
+
+            // Return the character at the calculated index in shortenedMessage
+            return shortenedMessage.charAt(index);
+        }
+
+        function findReplacement(index, message, frequencyList, mapping, password) {
+            // Remove characters in frequencyList up to and including the index
+            let shortenedMessage = message;
+            shortenedMessage = shortenedMessage.replace(/[\n\r\s]+/g, "");
+            for (let i = 0; i <= index; i++) {
+                shortenedMessage = shortenedMessage.replaceAll(mapping[frequencyList[i]], '');
+            }
+            // Select a character from the password using modulo
+            const passwordChar = password[index % password.length];
+
+            // Get the replacement character
+            return chooseReplacementCharacter(shortenedMessage, passwordChar);
+        }
+        
+        function createMapping(message, password) {
+            const frequencyList = generateFrequencyList(message);
+            const mapping = {};
+
+            frequencyList.forEach((char, index) => {
+                mapping[char] = findReplacement(index, message, frequencyList, mapping, password);
+            });
+            console.log(mapping);
+            return mapping;
+        }
+
+        function createReverseMapping(message, password) {
+            const frequencyList = generateFrequencyList(message);
+            const reverseMapping = {};
+
+            // frequencyList.forEach((char, index) => {
+            //     mapping[findReverseReplacement(index, message, frequencyList, mapping, password)] = char;
+            // });
+            alert('Reverse mapping not implemented yet');
+            return mapping;
+        }
+
+        
+
+        function encryptMessage(message, mapping) {
+            let encryptedMessage = '';
+
+            for (const char of message) {
+                encryptedMessage += mapping[char] || char;
+            }
+
+            return encryptedMessage;
+        }
+
+        function decryptMessage(message, mapping) {
+            let decryptedMessage = '';
+
+            for (const char of message) {
+                decryptedMessage += mapping[char] || char;
+            }
+
+            return decryptedMessage;
+        }
+    </script>
+</body>
+</html>
